@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-quizlive}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quizlive_dev_password_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-quizlive}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quizlive} -d ${POSTGRES_DB:-quizlive}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/QuizLive.Api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-quizlive};Username=${POSTGRES_USER:-quizlive};Password=${POSTGRES_PASSWORD:-quizlive_dev_password_change_me}
+      Jwt__Issuer: ${Jwt__Issuer:-QuizLive}
+      Jwt__Audience: ${Jwt__Audience:-QuizLive}
+      Jwt__SigningKey: ${Jwt__SigningKey:-dev-only-super-secret-signing-key-at-least-32-chars-long!}
+      Jwt__ExpiryMinutes: ${Jwt__ExpiryMinutes:-480}
+      SeedAdmin__Email: ${SeedAdmin__Email:-admin@quizlive.local}
+      SeedAdmin__Password: ${SeedAdmin__Password:-ChangeMe123!}
+      SeedAdmin__DisplayName: ${SeedAdmin__DisplayName:-QuizLive Admin}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-http://localhost:3000}
+      Db__AutoMigrate: "true"
+    ports:
+      - "5000:8080"
+    volumes:
+      - uploads_data:/app/data/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_INTERNAL_URL: http://api:8080
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+  uploads_data:

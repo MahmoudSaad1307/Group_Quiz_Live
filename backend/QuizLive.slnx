@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/QuizLive.Api/QuizLive.Api.csproj" />
+    <Project Path="src/QuizLive.Application/QuizLive.Application.csproj" />
+    <Project Path="src/QuizLive.Domain/QuizLive.Domain.csproj" />
+    <Project Path="src/QuizLive.Infrastructure/QuizLive.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/QuizLive.IntegrationTests/QuizLive.IntegrationTests.csproj" />
+    <Project Path="tests/QuizLive.LoadBots/QuizLive.LoadBots.csproj" />
+    <Project Path="tests/QuizLive.UnitTests/QuizLive.UnitTests.csproj" />
+  </Folder>
+</Solution>

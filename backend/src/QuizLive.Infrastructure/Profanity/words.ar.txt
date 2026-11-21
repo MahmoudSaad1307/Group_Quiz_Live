@@ -1,0 +1,8 @@
+# Arabic profanity list (one per line)
+كس
+شرموطة
+عرص
+منيك
+قحبة
+كلب
+حمار

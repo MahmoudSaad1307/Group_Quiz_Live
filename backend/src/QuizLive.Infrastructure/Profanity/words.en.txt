@@ -1,0 +1,10 @@
+# English profanity list (normalized lowercase, one per line)
+fuck
+shit
+bitch
+asshole
+bastard
+dickhead
+cunt
+whore
+slut

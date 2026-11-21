@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: quizlive/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: quizlive/backend/global.json
+      - name: Restore
+        run: dotnet restore
+      - name: Format check
+        run: dotnet format --verify-no-changes
+      - name: Build
+        run: dotnet build --no-restore -c Release
+      - name: Unit tests
+        run: dotnet test tests/QuizLive.UnitTests/QuizLive.UnitTests.csproj --no-build -c Release --collect:"XPlat Code Coverage"
+      - name: Integration tests
+        run: dotnet test tests/QuizLive.IntegrationTests/QuizLive.IntegrationTests.csproj --no-build -c Release
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: quizlive/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: quizlive/frontend/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
